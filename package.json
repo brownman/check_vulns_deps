@@ -6,6 +6,7 @@
     "parse-nodejs-lockfile": "./bin/index.js"
   },
   "scripts": {
+    "watch": "jest --watch",
     "test": "npm run unit-test && npm run test:jest",
     "unit-test": "tap --ts -Rspec ./test/lib/*.test.[tj]s --timeout=300 --no-check-coverage",
     "test:jest": "jest",
