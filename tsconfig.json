@@ -15,7 +15,7 @@
         "strict": true,
         "noImplicitAny": false // Needed to compile tap
     },
-    "include": [
+    "exclude": [
         ".DELETE_ME/bin/lib_old/**/*"
     ]
 }
