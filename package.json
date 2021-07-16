@@ -6,6 +6,7 @@
     "parse-nodejs-lockfile": "./bin/index.js"
   },
   "scripts": {
+    "curl": "while true; do curl 'http://localhost:8080/?name=@octokit&version=latest' &>/tmp/1.txt;cat /tmp/1.txt;echo .;sleep 5; done;",
     "serve": "nodemon src/index.ts",
     "watch": "NODE_ENV=testing jest --watch",
     "test": "npm run unit-test && npm run test:jest",

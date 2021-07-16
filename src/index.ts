@@ -7,7 +7,7 @@ import { go_travel } from "../lib/traveler"
 const port = 8080; // default port to listen
 
 // define a route handler for the default home page
-app.get("/",async (req, res) => {
+app.get("/", async (req, res) => {
 
     console.log(req.query)
 
@@ -18,8 +18,8 @@ app.get("/",async (req, res) => {
         name, version
     }
 
-    const result = await go_travel(name, version)
-    res.json(query, result);
+    const result = await go_travel(name, version).catch((e) => { console.log(e.message) })
+    res.json({ query, result });
 
 });
 
