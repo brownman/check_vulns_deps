@@ -13,11 +13,11 @@ describe('get package.json', () => {
     //     expect(get_package_json("A", "1")).toEqual(expected);
     // });
 
-    it('get with deps', () => {
+    it('get with deps', async () => {
         const expected_data = obj_repositoryInspected;
-        const res = go_travel("A", "1", obj_repository);
+        const res = await go_travel("A", "1", obj_repository);
         // expect(res).toEqual(1);
-        expect(expected_data).toEqual(res);
+        expect(expected_data).toEqual(2);
 
 
     });

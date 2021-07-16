@@ -2,19 +2,21 @@
 
 const obj_repository = require(`${__dirname}/../test/jest/fixtures/repository.json`);
 
-const config = require(`${__dirname}/../config.json`);
+const config = require(`../config/config.json`);
 
 const get_concatenated_key = function (name, version) { return name + '' + config.concatSymbol + '' + version; };
 
-
+const nodeFetch = require('node-fetch');
 
 
 const repositoryFetch = {
-    get: (name, version): Object => {
+    get: (name, version): Promise<Response> => {
         const key = get_concatenated_key(name, version);
-        if (process.env?.NODE_ENV === 'testing') { return obj_repository[key]; }
+        if (process.env?.NODE_ENV === 'xx') { return obj_repository[key] ; }
         else {
-            return fetch(config.url).
+            console.log(config.url)
+            throw new Error(config.url);
+            return nodeFetch(config.url).
                 then((data) => { return data.body }).
                 catch((err) => { return err; });
         }
@@ -65,14 +67,14 @@ class CacheVisit {
 
 const Utils = {
     isEmpty: (obj: Object): boolean => {
-        if (!obj) { throw new Error('not an object') }
+        if (!obj) { throw new Error('not an object:'+ obj) }
         return (Object.keys(obj).length === 0);
     }
 }
 
 //input: name and version
 //output: package.json content (includes: dependencies)
-function get_package_json(name, version) {
+async function get_package_json(name, version) {
 
     //get from cache if exists
     let response_data = cacheStore.get(name, version);
@@ -81,18 +83,18 @@ function get_package_json(name, version) {
     if (Utils.isEmpty(response_data)) {
 
         //Make a request (simulated)
-        response_data = repositoryFetch.get(name, version);
+        response_data = await repositoryFetch.get(name, version);
         cacheStore.set(name, version, response_data);
     }
     //return new data
     return response_data;
 }
 
-function get_package_json_with_deps(name: string, version: string, cacheVisit: CacheVisit) {
+async function get_package_json_with_deps(name: string, version: string, cacheVisit: CacheVisit) {
     let package_json;
 
     if (!cacheVisit) throw new Error('invalid cacheVisit')
-    if (!cacheVisit.get(name, version)) { package_json = get_package_json(name, version); cacheVisit.set(name, version); }
+    if (!cacheVisit.get(name, version)) { package_json = await get_package_json(name, version); cacheVisit.set(name, version); }
 
     let package_json_aggregated = {
         name: package_json.name, version: package_json.version, dependencies: {}
@@ -109,7 +111,7 @@ function get_package_json_with_deps(name: string, version: string, cacheVisit: C
 
             if (!res_cache_visit) {
                 //first time travel on this tree to this unique package.json (based on name and version)
-                ref[key] = get_package_json_with_deps(nameIt, versionIt, cacheVisit);
+                ref[key] = await get_package_json_with_deps(nameIt, versionIt, cacheVisit);
 
             } else { //sign visit in order to lock any more 
                 cacheVisit.set(nameIt, versionIt);
@@ -121,7 +123,7 @@ function get_package_json_with_deps(name: string, version: string, cacheVisit: C
     return package_json_aggregated;
 }
 
-export function go_travel(name, value, storage) {
+export  function go_travel(name, value) {
     const cacheVisit = new CacheVisit();
     return get_package_json_with_deps(name, value, cacheVisit);
 }
