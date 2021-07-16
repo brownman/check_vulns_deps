@@ -75,11 +75,11 @@ const Utils = {
     isObject: (obj) => {
         return typeof obj === 'object';
     },
-    isEmptyObject: (obj: Object): boolean => {
+    isObjectEmpty: (obj: Object): boolean => {
         // if (!obj) { throw new Error('not an object:'+ obj) }
         return (Utils.isObject(obj) && Object.keys(obj).length === 0);
     },
-    isNonEmptyObject: (obj: Object): boolean => {
+    isObjectWithData: (obj: Object): boolean => {
         // if (!obj) { throw new Error('not an object:'+ obj) }
         return (Utils.isObject(obj) && Object.keys(obj).length !== 0);
     }
@@ -114,22 +114,25 @@ export class Traveler {
                 });
             this.cacheVisit.set(name, version);
         }
-       // else { return "visited"; }
+        // else { return "visited"; }
 
         let package_json_aggregated: DependencyNext = {} as DependencyNext;
-        package_json_aggregated.name =  package_json.name;
+        package_json_aggregated.name = package_json.name;
         package_json_aggregated.version = package_json.version;
-       
+
         //for each dependency of fetched package.json set equivalent dependency key (with a key name based on (pkg name+ pkg version) ) on the aggregated.dependencies object
-        if (!Utils.isEmptyObject(package_json.dependencies)) {
+        if (Utils.isObjectWithData(package_json.dependencies)) {
 
             for (const [nameIt, versionIt] of Object.entries(package_json.dependencies) as any) {
                 const key = Utils.get_concatenated_key(nameIt, versionIt);
-                const ref = package_json_aggregated.dependencies;
+                const ref_new_item_on_deps_obj = package_json_aggregated.dependencies;
 
                 //first time travel on this tree to this unique package.json (based on name and version)
-                ref[key] =   this.get_package_json_with_deps(nameIt, versionIt);
+                ref_new_item_on_deps_obj[key] = this.get_package_json_with_deps(nameIt, versionIt);
             }
+        } else if (Utils.isObject(package_json.dependencies)) {
+            console.warn('setting dependencies with an empty object');
+            package_json_aggregated.dependencies = {} as Promise<DependencyNext>;
         }
         return await package_json_aggregated;
     }
@@ -137,14 +140,16 @@ export class Traveler {
     //input: name and version
     //output: package.json content (includes: dependencies),   cache the results.
     async get_package_json(name, version): Promise<any> {
-
-        return await repositoryFetch.get(name, version);;
+        // return await repositoryFetch.get(name, version);;
+        // return await repositoryFetch.get(name, version);;
         //get from cache if exists
         let response_data = cacheStore.get(name, version);
-        console.log(response_data)
         //fetch and store new data
-        if (Utils.isEmptyObject(response_data)) {
-
+        if (Utils.isObject(response_data)) {
+            console.log('using cache instead of fetching new data for name,version: ' + name + '|' + version);
+            console.log({ response_data })
+        } else {
+            console.log('fetch new item');
             //Make a request (simulated)
             response_data = await repositoryFetch.get(name, version);
             cacheStore.set(name, version, response_data);
@@ -152,6 +157,4 @@ export class Traveler {
         //return new data
         return response_data;
     }
-
-
 }

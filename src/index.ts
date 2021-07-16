@@ -8,8 +8,9 @@ const port = 8080; // default port to listen
 
 // define a route handler for the default home page
 app.get("/", async (req, res) => {
+    // return  res.send(process.env?.NODE_ENV);
 
-    console.log(req.query)
+    console.log('__' , req.query)
 
     const name = req.query.name || 'octokit';
     const version = req.query.version || 'latest';
@@ -18,8 +19,10 @@ app.get("/", async (req, res) => {
         name, version
     };
     
-    let travel = new Traveler();
+    const travel = new Traveler();
     const result = await travel.get_package_json_with_deps(name, version)
+    // .catch((data) => { console.log(data) })
+
     .catch((e) => { console.log(e.message) })
     
     res.json({ query, result });
