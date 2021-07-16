@@ -8,7 +8,7 @@ const nodeFetch = require('node-fetch');
 type DependencyNext = {
     name: string;
     version: string;
-    dependencies: Promise<DependencyNext>;
+    dependencies: Promise<DependencyNext> | {}
 }
 
 const repositoryFetch = {
@@ -21,7 +21,9 @@ const repositoryFetch = {
             //   return config.url;
             const pkgName = name;
             const pkgVersionOrTag = version;
-            return nodeFetch(`${config.url}/${pkgName}/${pkgVersionOrTag}`)
+            const nextUrl = `${config.url}/${pkgName}/${pkgVersionOrTag}`;
+            console.log({ nextUrl });
+            return nodeFetch(nextUrl)
                 .then((data) => { return data.json(); })
                 .catch((err) => { return err; });
         }
@@ -104,9 +106,13 @@ export class Traveler {
 
 
 
-    async get_package_json_with_deps(name: string, version: string): Promise<DependencyNext> {
+    async get_package_json_with_deps(name: string, version: string, level: number = config.default_max_level): Promise<DependencyNext | string> {
         let package_json;
-        console.log({ name, version });
+
+        if (level == 0) {
+            return "reach level:" + config.default_max_level;
+        }
+        console.log('get_package_json_with_deps:', { name, version });
         if (!this.cacheVisit.get(name, version)) {
             package_json = await this.get_package_json(name, version)
                 .catch((err) => {
@@ -114,11 +120,13 @@ export class Traveler {
                 });
             this.cacheVisit.set(name, version);
         }
-        // else { return "visited"; }
+        else { return "visited"; }
 
         let package_json_aggregated: DependencyNext = {} as DependencyNext;
         package_json_aggregated.name = package_json.name;
         package_json_aggregated.version = package_json.version;
+        package_json_aggregated.dependencies = {};
+
 
         //for each dependency of fetched package.json set equivalent dependency key (with a key name based on (pkg name+ pkg version) ) on the aggregated.dependencies object
         if (Utils.isObjectWithData(package_json.dependencies)) {
@@ -126,9 +134,13 @@ export class Traveler {
             for (const [nameIt, versionIt] of Object.entries(package_json.dependencies) as any) {
                 const key = Utils.get_concatenated_key(nameIt, versionIt);
                 const ref_new_item_on_deps_obj = package_json_aggregated.dependencies;
-
+                try {
+                    ref_new_item_on_deps_obj[key] = await this.get_package_json_with_deps(nameIt, versionIt, level--);
+                } catch (err) {
+                    console.log(err);
+                    throw err;
+                }
                 //first time travel on this tree to this unique package.json (based on name and version)
-                ref_new_item_on_deps_obj[key] = this.get_package_json_with_deps(nameIt, versionIt);
             }
         } else if (Utils.isObject(package_json.dependencies)) {
             console.warn('setting dependencies with an empty object');
@@ -151,7 +163,16 @@ export class Traveler {
         } else {
             console.log('fetch new item');
             //Make a request (simulated)
-            response_data = await repositoryFetch.get(name, version);
+            try {
+                response_data = await repositoryFetch.get(name, version)
+
+            } catch (e) {
+                console.log(e);
+                throw e;
+            }
+
+
+            //.catch(err => { throw err; });
             cacheStore.set(name, version, response_data);
         }
         //return new data

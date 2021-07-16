@@ -1,6 +1,5 @@
 {
-    "packageJsonUrl":"https://registry.npmjs.org",
-    "includeDevDependencies": true
-
-    
+    "packageJsonUrl": "https://registry.npmjs.org",
+    "includeDevDependencies": true,
+    "default_max_level": 4
 }

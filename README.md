@@ -1,13 +1,18 @@
-https://registry.npmjs.org/octokit/latest
+## todos
 
-   requestIt(url) {
-        const url = config.url;
+- async calls - add catch were it is not already covered
+- repalce then with async/await
 
-        return nodeFetch(url).then(function (u) {
-            return u.json().then(function (val) {
-                console.log(val);
-            });
-        }).catch(function (err) {
-            // handle error here
-        });
-    }
+## regs
+
+- show warnings:
+- https://github.com/TypeStrong/ts-node/issues/465
+
+```sh
+node  --trace-warnings -r ts-node/register -r tsconfig-paths/register ./src/index.ts
+node  --trace-warnings -r ts-node/register ./src/index.ts
+```
+
+# qa
+
+- speed: await under for loop - vs - promise.all
