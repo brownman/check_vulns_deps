@@ -1,23 +1,29 @@
 
-let obj_repository = {};
+let obj_repository: any = {};
 
 
 const config = require(`../config/config.json`);
 
 const nodeFetch = require('node-fetch');
-
+type DependencyNext = {
+    name: string;
+    version: string;
+    dependencies: Promise<DependencyNext>;
+}
 
 const repositoryFetch = {
     get: (name, version): Promise<Response> => {
         const key = Utils.get_concatenated_key(name, version);
-        if (process.env?.NODE_ENV === 'testing') { 
+        if (process.env?.NODE_ENV === 'testing') {
             return obj_repository[key];
         }
         else {
-            return config.url;
-            return nodeFetch(config.url).
-                then((data) => { return data.body }).
-                catch((err) => { return err; });
+            //   return config.url;
+            const pkgName = name;
+            const pkgVersionOrTag = version;
+            return nodeFetch(`${config.url}/${pkgName}/${pkgVersionOrTag}`)
+                .then((data) => { return data.json(); })
+                .catch((err) => { return err; });
         }
     }
 }
@@ -89,7 +95,7 @@ export class Traveler {
 
     private cacheVisit: CacheVisit;
 
-    constructor(storage: Object) {
+    constructor(storage: Object | null = null) {
         obj_repository = storage;
 
         //single instance per a travel
@@ -98,24 +104,22 @@ export class Traveler {
 
 
 
-    async get_package_json_with_deps(name: string, version: string) {
+    async get_package_json_with_deps(name: string, version: string): Promise<DependencyNext> {
         let package_json;
-
-        // if (!cacheVisit) throw new Error('invalid cacheVisit')
+        console.log({ name, version });
         if (!this.cacheVisit.get(name, version)) {
             package_json = await this.get_package_json(name, version)
                 .catch((err) => {
                     throw err;
-
                 });
             this.cacheVisit.set(name, version);
         }
-        else { return "visited"; }
+       // else { return "visited"; }
 
-        let package_json_aggregated = {
-            name: package_json.name, version: package_json.version, dependencies: {}
-        }
-
+        let package_json_aggregated: DependencyNext = {} as DependencyNext;
+        package_json_aggregated.name =  package_json.name;
+        package_json_aggregated.version = package_json.version;
+       
         //for each dependency of fetched package.json set equivalent dependency key (with a key name based on (pkg name+ pkg version) ) on the aggregated.dependencies object
         if (!Utils.isEmptyObject(package_json.dependencies)) {
 
@@ -124,10 +128,10 @@ export class Traveler {
                 const ref = package_json_aggregated.dependencies;
 
                 //first time travel on this tree to this unique package.json (based on name and version)
-                ref[key] = await this.get_package_json_with_deps(nameIt, versionIt);
+                ref[key] =   this.get_package_json_with_deps(nameIt, versionIt);
             }
         }
-        return package_json_aggregated;
+        return await package_json_aggregated;
     }
 
     //input: name and version
@@ -149,7 +153,5 @@ export class Traveler {
         return response_data;
     }
 
-    return_num(): number {
-        return 55;
-    }
+
 }

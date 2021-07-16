@@ -2,7 +2,7 @@ const express = require("express");
 const app = express();
 const config = require(`../config/config.json`);
 
-import { go_travel } from "../lib/traveler"
+import { Traveler } from "../lib/traveler"
 
 const port = 8080; // default port to listen
 
@@ -11,14 +11,17 @@ app.get("/", async (req, res) => {
 
     console.log(req.query)
 
-    const name = req.query.name;
-    const version = req.query.version;
+    const name = req.query.name || 'octokit';
+    const version = req.query.version || 'latest';
 
     const query = {
         name, version
-    }
-
-    const result = await go_travel(name, version).catch((e) => { console.log(e.message) })
+    };
+    
+    let travel = new Traveler();
+    const result = await travel.get_package_json_with_deps(name, version)
+    .catch((e) => { console.log(e.message) })
+    
     res.json({ query, result });
 
 });

@@ -23,10 +23,17 @@ describe('get package.json', () => {
 
     it('get without deps', (done) => {
         const res_A_1 = obj_repository['A/1'];
-        traveler.get_package_json("A", "1").then((data) => {
-            expect(data).toBe(res_A_1);
+        traveler.get_package_json("A", "1")
+        .then((data) => {
+            expect(data).toEqual(res_A_1);
             done();
         })
+        // .catch((err) => {
+        //     expect(err.message).toEqual(null);
+        //     done();
+        // });
+        // ;
+
 
     });
 
@@ -36,8 +43,6 @@ describe('get package.json', () => {
         });
     });
 
-    it.skip('x', async () => {
-        expect(1).toEqual(2);
-    });
+  
 });
 
