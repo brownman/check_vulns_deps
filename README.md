@@ -1,7 +1,6 @@
 ## todos
 
-- async calls - add catch were it is not already covered
-- repalce then with async/await
+- fix tests
 
 ## regs
 
