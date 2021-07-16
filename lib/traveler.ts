@@ -12,7 +12,7 @@ type DependencyNext = {
 }
 
 const repositoryFetch = {
-    get: (name, version): Promise<Response> => {
+    get: async (name, version): Promise<Response> => {
         const key = Utils.get_concatenated_key(name, version);
         if (process.env?.NODE_ENV === 'testing') {
             return obj_repository[key];
@@ -22,10 +22,9 @@ const repositoryFetch = {
             const pkgName = name;
             const pkgVersionOrTag = version;
             const nextUrl = `${config.url}/${pkgName}/${pkgVersionOrTag}`;
-            console.log({ nextUrl });
-            return nodeFetch(nextUrl)
-                .then((data) => { return data.json(); })
-                .catch((err) => { return err; });
+            console.error({ nextUrl });
+            const res = await nodeFetch(nextUrl).catch((err) => { throw err; });
+            return res.json();
         }
     }
 }
@@ -122,10 +121,18 @@ export class Traveler {
         }
         else { return "visited"; }
 
-        let package_json_aggregated: DependencyNext = {} as DependencyNext;
-        package_json_aggregated.name = package_json.name;
-        package_json_aggregated.version = package_json.version;
-        package_json_aggregated.dependencies = {};
+        try {
+            let package_json_aggregated: DependencyNext = {} as DependencyNext;
+
+            console.log(package_json);
+            package_json_aggregated.name = package_json.name;
+            package_json_aggregated.version = package_json.version;
+            package_json_aggregated.dependencies = {};
+        } catch (e) {
+            console.error(e);
+            throw e;
+        }
+
 
 
         //for each dependency of fetched package.json set equivalent dependency key (with a key name based on (pkg name+ pkg version) ) on the aggregated.dependencies object
@@ -152,8 +159,7 @@ export class Traveler {
     //input: name and version
     //output: package.json content (includes: dependencies),   cache the results.
     async get_package_json(name, version): Promise<any> {
-        // return await repositoryFetch.get(name, version);;
-        // return await repositoryFetch.get(name, version);;
+
         //get from cache if exists
         let response_data = cacheStore.get(name, version);
         //fetch and store new data
@@ -165,14 +171,10 @@ export class Traveler {
             //Make a request (simulated)
             try {
                 response_data = await repositoryFetch.get(name, version)
-
             } catch (e) {
-                console.log(e);
+                console.error(e);
                 throw e;
             }
-
-
-            //.catch(err => { throw err; });
             cacheStore.set(name, version, response_data);
         }
         //return new data
