@@ -1,0 +1,21 @@
+
+{
+    "dependencies": {
+        "B/1": {
+            "dependencies": {
+                "C/1": {
+                    "dependencies": {
+                        "A/1": "visited",
+                        "B/1": "visited"
+                    },
+                    "name": "C",
+                    "version": "1"
+                }
+            },
+            "name": "B",
+            "version": "1"
+        }
+    },
+    "name": "A",
+    "version": "1"
+}
