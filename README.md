@@ -21,3 +21,11 @@ Endpoints:
 ## refs:
 
 - https://github.com/npm/node-semver
+
+todos:
+-------
+- live update using websocket
+- decouple api and compute workers  
+- scaling: deploy to kubernetes
+- distribute jobs among workers
+- central monitoring
