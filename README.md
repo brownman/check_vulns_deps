@@ -24,6 +24,7 @@ Endpoints:
 
 todos:
 -------
+- add github actions as CI
 - live update using websocket
 - decouple api and compute workers  
 - scaling: deploy to kubernetes
