@@ -1,13 +1,9 @@
 'use strict'
 
 import { Traveler, cacheStore } from '../../lib/traveler';
-// const config = require(`${__dirname}/../.../config.json`);
 
 let obj_repository;
-// obj_repository = require(`${__dirname}/fixtures/repository.json`);
-// // let obj_repository_expected;
 let obj_repository_expected;
-//  obj_repository_expected = require(`${__dirname}/fixtures/repository.expected.json`);
 
 
 let traveler: Traveler;

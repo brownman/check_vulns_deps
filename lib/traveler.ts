@@ -22,8 +22,8 @@ const repositoryFetch = {
             const pkgName = name;
             const pkgVersionOrTag = version;
             const nextUrl = `${config.url}/${pkgName}/${pkgVersionOrTag}`;
-            console.error({ nextUrl });
-            const res = await nodeFetch(nextUrl).catch((err) => { throw err; });
+            console.log('______________________', { nextUrl });
+            const res = await nodeFetch(nextUrl).catch((err) => { console.error(err); throw err; });
             return res.json();
         }
     }
@@ -35,15 +35,17 @@ const repositoryFetch = {
 export const cacheStore = {
     //key comprised of name and version
     data: obj_repository,
-    get: (name, version) => {
+    get(name, version) {
         const key = Utils.get_concatenated_key(name, version);
-
         return cacheStore.data[key]
     },
-    set: (name, version, content) => {
-        const key = Utils.get_concatenated_key(name, version);
-
-        cacheStore.data[key] = content;
+    set(t_name, t_version, t_content) {
+        const key = Utils.get_concatenated_key(t_name, t_version);
+        const { name, version, dependencies } = t_content;
+        cacheStore.data[key] = { name, version, dependencies };
+    },
+    get_all() {
+        return cacheStore.data;
     }
 }
 
@@ -64,8 +66,11 @@ class CacheVisit {
         const key = Utils.get_concatenated_key(name, version);
 
         //use dictionary with minimal data just to sign a graph node should not be process
-        this.data[key] = true;
+        this.data[Symbol(key)] = true;
     };
+    get_all() {
+        return this.data;
+    }
 
 }
 
@@ -103,7 +108,10 @@ export class Traveler {
         this.cacheVisit = new CacheVisit();
     }
 
+    get_cache_visit() {
 
+        return { visit: this.cacheVisit.get_all(), pkg_content: cacheStore.get_all() };
+    }
 
     async get_package_json_with_deps(name: string, version: string, level: number = config.default_max_level): Promise<DependencyNext | string> {
         let package_json;
@@ -113,27 +121,21 @@ export class Traveler {
         }
         console.log('get_package_json_with_deps:', { name, version });
         if (!this.cacheVisit.get(name, version)) {
+            //lock access for getting the following package another time.
+            this.cacheVisit.set(name, version);
+
             package_json = await this.get_package_json(name, version)
                 .catch((err) => {
                     throw err;
                 });
-            this.cacheVisit.set(name, version);
         }
         else { return "visited"; }
 
-        try {
-            let package_json_aggregated: DependencyNext = {} as DependencyNext;
+        let package_json_aggregated: DependencyNext = {} as DependencyNext;
 
-            console.log(package_json);
-            package_json_aggregated.name = package_json.name;
-            package_json_aggregated.version = package_json.version;
-            package_json_aggregated.dependencies = {};
-        } catch (e) {
-            console.error(e);
-            throw e;
-        }
-
-
+        package_json_aggregated.name = package_json.name;
+        package_json_aggregated.version = package_json.version;
+        package_json_aggregated.dependencies = {};
 
         //for each dependency of fetched package.json set equivalent dependency key (with a key name based on (pkg name+ pkg version) ) on the aggregated.dependencies object
         if (Utils.isObjectWithData(package_json.dependencies)) {
@@ -145,7 +147,9 @@ export class Traveler {
                     ref_new_item_on_deps_obj[key] = await this.get_package_json_with_deps(nameIt, versionIt, level--);
                 } catch (err) {
                     console.log(err);
-                    throw err;
+                    ref_new_item_on_deps_obj[key] = err.message;
+
+                    // throw err;
                 }
                 //first time travel on this tree to this unique package.json (based on name and version)
             }
@@ -165,17 +169,20 @@ export class Traveler {
         //fetch and store new data
         if (Utils.isObject(response_data)) {
             console.log('using cache instead of fetching new data for name,version: ' + name + '|' + version);
-            console.log({ response_data })
+            // console.log({ response_data })
         } else {
             console.log('fetch new item');
             //Make a request (simulated)
             try {
-                response_data = await repositoryFetch.get(name, version)
+                response_data = await repositoryFetch.get(name, version);
+                console.log(response_data);
             } catch (e) {
                 console.error(e);
                 throw e;
             }
             cacheStore.set(name, version, response_data);
+            this.cacheVisit.set(name, version);
+
         }
         //return new data
         return response_data;
