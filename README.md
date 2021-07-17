@@ -1,10 +1,8 @@
 ## how to
 
-- Note: the app is running in singleton mode - so kill the process if you want to experiment it with different inputs.
-
-- options:de
-
----
+status
+-------------
+- The app is running in a singleton mode - so kill the process if you want to experiment it with different inputs.
 
 ```sh
 Endpoints:
@@ -14,13 +12,9 @@ Endpoints:
 -  /status - show the current dependency graph
 ```
 
-# qa - farther investigations:
-
-- speed: for loop+await - VS - promise.all
-
 ## refs:
-
-- https://github.com/npm/node-semver
+- speed: for loop+await - VS - promise.all: https://stackoverflow.com/questions/45285129/any-difference-between-await-promise-all-and-multiple-await
+- semver convertions (when fetching a semantic version fails): https://github.com/npm/node-semver
 
 todos:
 -------
@@ -30,3 +24,7 @@ todos:
 - scaling: deploy to kubernetes
 - distribute jobs among workers
 - central monitoring
+
+extended features (not yet implemented)
+-----
+- start/stop/pause process
