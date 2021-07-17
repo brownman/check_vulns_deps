@@ -1,4 +1,4 @@
-## Objectives: build a dependencies tree for a givven npm module name and version/tag:
+## Objectives: build a dependencies tree for a given npm module (by supplying a name and version/tag):
 
 status
 -------------
@@ -24,7 +24,4 @@ todos:
 - scaling: deploy to kubernetes
 - distribute jobs among workers
 - central monitoring
-
-extended features (not yet implemented)
------
-- start/stop/pause process
+- start/stop/pause process (app level vs kubernates level)
