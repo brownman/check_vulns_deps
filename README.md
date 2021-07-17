@@ -1,17 +1,15 @@
-## todos
+## how to
 
-- fix use of travel-cache (tests already passed)
+- Note: the app is running in singleton mode - so kill the process if you want to try it with different inputs.
 
-## regs
+- options:
 
-- show warnings:
-- https://github.com/TypeStrong/ts-node/issues/465
+---
 
-```sh
-node  --trace-warnings -r ts-node/register -r tsconfig-paths/register ./src/index.ts
-node  --trace-warnings -r ts-node/register ./src/index.ts
-```
+- visit /<pkg-name>/<pkg-version>
+- visit /default to trigger the harvesting job for: express/4.17.1
+- visit /cache
 
-# qa
+# qa - farther investigations:
 
 - speed: await under for loop - vs - promise.all
