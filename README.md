@@ -1,4 +1,4 @@
-## how to
+## Objectives: build a dependencies tree for a givven npm module name and version/tag:
 
 status
 -------------
