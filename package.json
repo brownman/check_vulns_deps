@@ -9,7 +9,7 @@
     "curl": "sleep 2;while true; do curl 'http://localhost:8080/?name=express&version=4.17.1' 2>/dev/null 1>/tmp/1.txt;cat /tmp/1.txt;echo .;sleep 10; done;",
     "serve": "nodemon src/index.ts",
     "watch": "NODE_ENV=testing jest --watch",
-    "test": "npm run unit-test && npm run test:jest",
+    "test": "NODE_ENV=testing jest",
     "unit-test": "tap --ts -Rspec ./test/lib/*.test.[tj]s --timeout=300 --no-check-coverage",
     "test:jest": "jest",
     "lint": "eslint --color --cache '{lib,test}/**/*.{js,ts}' && prettier --check '{lib,test}/**/*.{js,ts}'",

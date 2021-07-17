@@ -41,8 +41,14 @@ export const cacheStore = {
     },
     set(t_name, t_version, t_content) {
         const key = Utils.get_concatenated_key(t_name, t_version);
-        const { name, version, dependencies } = t_content;
-        cacheStore.data[key] = { name, version, dependencies };
+        if (t_content) {
+            const { name, version, dependencies } = t_content;
+            cacheStore.data[key] = { name, version, dependencies };
+        } else {
+            cacheStore.data[key] = 'invalid request';
+
+        }
+
     },
     get_all() {
         return cacheStore.data;
@@ -151,7 +157,7 @@ export class Traveler {
                     console.log(err);
                     ref_new_item_on_deps_obj[key] = err.message;
 
-                    // throw err;
+                    throw err;
                 }
                 //first time travel on this tree to this unique package.json (based on name and version)
             }
@@ -182,8 +188,13 @@ export class Traveler {
                 console.error(e);
                 throw e;
             }
-            cacheStore.set(name, version, response_data);
-            this.cacheVisit.set(name, version);
+            if (response_data) {
+                cacheStore.set(name, version, response_data);
+                this.cacheVisit.set(name, version);
+            } else {
+                cacheStore.set(name, version, null);
+                this.cacheVisit.set(name, version);//cacheVisit is not an indicator for content integrity but only for a visit.
+            }
 
         }
         //return new data

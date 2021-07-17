@@ -1,6 +1,6 @@
 ## todos
 
-- fix tests
+- fix use of travel-cache (tests already passed)
 
 ## regs
 

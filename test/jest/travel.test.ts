@@ -40,7 +40,7 @@ describe('check caching', () => {
 
 
 
-describe.skip('get package.json', () => {
+describe('get package.json', () => {
     beforeEach(() => {
         obj_repository = require(`${__dirname}/fixtures/simple/repository.json`);
         obj_repository_expected = require(`${__dirname}/fixtures/simple/repository.expected.json`);
