@@ -5,7 +5,8 @@
 - options:
 
 ---
-```sh 
+
+```sh
 - visit /<pkg-name>/<pkg-version>
 - visit /default to trigger the harvesting job for: express/4.17.1
 - visit /cache
@@ -13,4 +14,8 @@
 
 # qa - farther investigations:
 
-- speed:  for loop+await - VS - promise.all
+- speed: for loop+await - VS - promise.all
+
+## refs:
+
+- https://github.com/npm/node-semver

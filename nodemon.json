@@ -1,10 +1,13 @@
 {
     "watch": [
-        "src"
+        "src",
+        "lib",
+        "config",
+        "index.ts"
     ],
     "ext": "ts,json",
     "ignore": [
         "src/**/*.spec.ts"
     ],
-    "exec": "ts-node --trace-warnings ./src/index.ts"
+    "exec": "NODE_OPTIONS='--unhandled-rejections=strict'  ts-node ./src/index.ts"
 }

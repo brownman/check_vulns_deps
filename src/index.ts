@@ -5,11 +5,11 @@ const config = require(`../config/config.json`);
 import { Traveler } from "../lib/traveler"
 
 const port = 8080; // default port to listen
-let travel: Traveler;
+let traveler: Traveler;
 
 app.get("/cache", async (req, res) => {
-    if (travel) {
-        const result = await travel.get_cache_visit();
+    if (traveler) {
+        const result = await traveler.get_cache_visit();
         res.json({ result });
     } else {
         res.send('no job is running');
@@ -29,14 +29,26 @@ app.get("/", async (req, res) => {
     const query = {
         name, version
     };
+    if (!name || !version) {
+        res.send('please supply name and version in the form: host:port/?name=express&version=4.17.1');
+        return;
+    }
+    if (!traveler) { traveler = new Traveler();/*use as singleton*/ }
 
-    if (!travel) { travel = new Traveler();/*use as singleton*/ }
-
-    const result = await travel.get_package_json_with_deps(name, version)
-        .catch((e) => { console.log(e.message) })
+    const result = await traveler.init_get_package_json_with_deps(name, version)
 
     res.json({ query, result });
 });
+
+app.get("/status", async (req, res) => {
+    if (!traveler) {
+        return res.send('no job is running, start it by visiting endpoints: / or /default');
+    }
+    const result = await traveler.get_status();
+    res.json(result);
+});
+
+
 // define a route handler for the default home page
 app.get("/default", async (req, res) => {
 
@@ -49,12 +61,11 @@ app.get("/default", async (req, res) => {
         name, version
     };
 
-    if (!travel) { travel = new Traveler();/*use as singleton*/ }
+    if (!traveler) { traveler = new Traveler();/*use as singleton*/ }
 
-    const result = await travel.get_package_json_with_deps(name, version)
-        .catch((e) => { console.log(e.message) })
+    const res_was_running = traveler.init_get_package_json_with_deps(name, version)
 
-    res.json({ query, result });
+    res.json({ query, res_was_running });
 });
 
 // start the Express server

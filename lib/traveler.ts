@@ -1,3 +1,4 @@
+const semver = require('semver')
 
 let obj_repository: any = {};
 
@@ -58,9 +59,12 @@ export const cacheStore = {
 //life cycle: per instance
 class CacheVisit {
     private data;
+    private counter;
     //key comprised of name and version
     constructor() {
         this.data = {};
+        this.counter = 0;
+
     }
 
     get(name, version): boolean {
@@ -72,10 +76,10 @@ class CacheVisit {
         const key = Utils.get_concatenated_key(name, version);
 
         //use dictionary with minimal data just to sign a graph node should not be process
-        this.data[key] = true;
+        this.data[key] = this.counter++;
     };
     get_all() {
-        return this.data;
+        return { data: this.data, counter: this.counter };
     }
 
 }
@@ -106,6 +110,7 @@ export class Traveler {
     // private obj_repository: Object;
 
     private cacheVisit: CacheVisit;
+    private package_json_aggregated_instance: any = {};
 
     constructor(storage: Object | null = null) {
         obj_repository = storage;
@@ -118,41 +123,73 @@ export class Traveler {
     }
     get_cache_visit() {
 
-        return { visit: this.cacheVisit.get_all(), pkg_content: cacheStore.get_all() };
+        return { visits: this.cacheVisit.get_all(), pkg_content: cacheStore.get_all() };
     }
 
-    async get_package_json_with_deps(name: string, version: string, level: number = config.default_max_level): Promise<DependencyNext | string> {
-        let package_json;
+    get_status(): Promise<DependencyNext | string> {
+        return this.package_json_aggregated_instance.ptr;
+    }
 
+    init_get_package_json_with_deps(name: string, version: string, level: number = config.default_max_level): any {
+        let was_running = true;
+        console.log({ package_json_aggregated_instance: this.package_json_aggregated_instance })
+        if (!this.package_json_aggregated_instance.hasOwnProperty('ptr')) {
+            this.package_json_aggregated_instance.ptr = this.next_get_package_json_with_deps(name, version, level).catch(e => {
+                this.package_json_aggregated_instance.ptr = e.message;
+                console.log(1, e);
+                console.log(2, e.message);
+
+                process.exit(1);
+
+            })
+            was_running = false;
+        }
+
+        return { was_running };
+    }
+
+    async next_get_package_json_with_deps(name: string, version: string, level: number): Promise<DependencyNext | string> {
+
+        let package_json;
+        let package_json_aggregated: DependencyNext = {} as DependencyNext;
+
+        //STOP ANOTHER RECURSION BASED ON THE LIMIT LEVEL
         if (level == 0) {
             return "reach level:" + config.default_max_level;
         }
-        console.log('get_package_json_with_deps:', { name, version });
+
+
+        // version = semver.coerce(version)
+
+        //EXPAND CURRENT DEPENDENCY IF NOT ALREADY EXISTS 
         if (!this.cacheVisit.get(name, version)) {
             //lock access for getting the following package another time.
             this.cacheVisit.set(name, version);
 
             package_json = await this.get_package_json(name, version)
                 .catch((err) => {
-                    throw err;
+                    console.log(err.message);
+                    // throw err;
+                    return err.message as Promise<string>;
                 });
         }
         else { return "visited"; }
 
-        let package_json_aggregated: DependencyNext = {} as DependencyNext;
 
         package_json_aggregated.name = package_json.name;
         package_json_aggregated.version = package_json.version;
+        //next we will need to create a dependency key for every item under the package.json>dependencies object
         package_json_aggregated.dependencies = {};
 
         //for each dependency of fetched package.json set equivalent dependency key (with a key name based on (pkg name+ pkg version) ) on the aggregated.dependencies object
         if (Utils.isObjectWithData(package_json.dependencies)) {
 
-            for (const [nameIt, versionIt] of Object.entries(package_json.dependencies) as any) {
+            for (let [nameIt, versionIt] of Object.entries(package_json.dependencies) as any) {
+                // versionIt = semver.coerce(versionIt)
                 const key = Utils.get_concatenated_key(nameIt, versionIt);
                 const ref_new_item_on_deps_obj = package_json_aggregated.dependencies;
                 try {
-                    ref_new_item_on_deps_obj[key] = await this.get_package_json_with_deps(nameIt, versionIt, level--);
+                    ref_new_item_on_deps_obj[key] = await this.next_get_package_json_with_deps(nameIt, versionIt, level--);
                 } catch (err) {
                     console.log(err);
                     ref_new_item_on_deps_obj[key] = err.message;
@@ -171,7 +208,7 @@ export class Traveler {
     //input: name and version
     //output: package.json content (includes: dependencies),   cache the results.
     async get_package_json(name, version): Promise<any> {
-
+        let error_msg;
         //get from cache if exists
         let response_data = cacheStore.get(name, version);
         //fetch and store new data
@@ -183,16 +220,19 @@ export class Traveler {
             //Make a request (simulated)
             try {
                 response_data = await repositoryFetch.get(name, version);
-                console.log(response_data);
+                console.log('fetched: ' + response_data.name);
             } catch (e) {
-                console.error(e);
-                throw e;
+                console.error('error fetching' + e.message);
+                // throw e;
+                error_msg = e.message;
             }
             if (response_data) {
                 cacheStore.set(name, version, response_data);
                 this.cacheVisit.set(name, version);
             } else {
-                cacheStore.set(name, version, null);
+                //save the error instead the fetched content
+                response_data = { error_msg }
+                cacheStore.set(name, version, error_msg);
                 this.cacheVisit.set(name, version);//cacheVisit is not an indicator for content integrity but only for a visit.
             }
 
