@@ -8,7 +8,39 @@ let obj_repository_expected;
 
 let traveler: Traveler;
 
-describe('get package.json', () => {
+
+describe('check caching', () => {
+    beforeEach(() => {
+        obj_repository = require(`${__dirname}/fixtures/simple/repository.json`);
+        traveler = new Traveler(obj_repository);
+    })
+
+    it('persistant caching', () => {
+        const name = "A";
+        const version = "3";
+        const data = { "dependencies": { "A": 1 }, "name": "name1", "version": "version2" }
+
+        cacheStore.set(name, version, data);
+
+        const res = cacheStore.get(name, version,);
+        expect(res).toEqual(data)
+    });
+
+    it('cache per travel instance', () => {
+        const name = "octokit";
+        const version = "1.1.2";
+        const expected = { "octokit: 1.1.2": true };
+
+        const cacheVisit = traveler.get_cache_visit_instance();
+        cacheVisit.set(name, version);
+        const res = cacheVisit.get_all();
+        expect(res).toEqual(expected);
+    });
+})
+
+
+
+describe.skip('get package.json', () => {
     beforeEach(() => {
         obj_repository = require(`${__dirname}/fixtures/simple/repository.json`);
         obj_repository_expected = require(`${__dirname}/fixtures/simple/repository.expected.json`);
@@ -16,16 +48,8 @@ describe('get package.json', () => {
         traveler = new Traveler(obj_repository);
     })
 
-    it('cache get & set', () => {
-        const name = "A";
-        const version = "3";
-        const data = { k: 1 }
 
-        cacheStore.set(name, version, data);
 
-        const res = cacheStore.get(name, version,);
-        expect(res).toBe(data)
-    });
 
     it('get without deps', async (done) => {
         const res_A_1 = obj_repository['A: 1'];
@@ -43,7 +67,7 @@ describe('get package.json', () => {
 
 });
 
-describe('get package.json', () => {
+describe.skip('get package.json', () => {
     beforeAll(() => {
         obj_repository = require(`${__dirname}/fixtures/real/res.json`);
         obj_repository_expected = require(`${__dirname}/fixtures/real/res.expected.json`);
@@ -54,16 +78,7 @@ describe('get package.json', () => {
     })
 
 
-    it('cache get & set', () => {
-        const name = "octokit";
-        const version = "1.1.0";
-        const data = 3333;//{ k: 1 }
 
-        cacheStore.set(name, version, data);
-
-        const res = cacheStore.get(name, version,);
-        expect(res).toBe(data)
-    });
 
     it('get without deps', async (done) => {
         const xx = obj_repository['octokit: 1.1.0'];

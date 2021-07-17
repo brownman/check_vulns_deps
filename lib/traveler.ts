@@ -66,7 +66,7 @@ class CacheVisit {
         const key = Utils.get_concatenated_key(name, version);
 
         //use dictionary with minimal data just to sign a graph node should not be process
-        this.data[Symbol(key)] = true;
+        this.data[key] = true;
     };
     get_all() {
         return this.data;
@@ -107,7 +107,9 @@ export class Traveler {
         //single instance per a travel
         this.cacheVisit = new CacheVisit();
     }
-
+    get_cache_visit_instance() {
+        return this.cacheVisit;
+    }
     get_cache_visit() {
 
         return { visit: this.cacheVisit.get_all(), pkg_content: cacheStore.get_all() };

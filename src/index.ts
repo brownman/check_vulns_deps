@@ -8,10 +8,10 @@ const port = 8080; // default port to listen
 let travel: Traveler;
 
 app.get("/cache", async (req, res) => {
-
-    const result = await travel.get_cache_visit();
-
-    res.json({ result });
+    if (travel) {
+        const result = await travel.get_cache_visit();
+        res.json({ result });
+    }
 });
 
 
