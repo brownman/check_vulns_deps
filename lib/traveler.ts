@@ -47,9 +47,7 @@ export const cacheStore = {
             cacheStore.data[key] = { name, version, dependencies };
         } else {
             cacheStore.data[key] = 'invalid request';
-
         }
-
     },
     get_all() {
         return cacheStore.data;
@@ -64,7 +62,6 @@ class CacheVisit {
     constructor() {
         this.data = {};
         this.counter = 0;
-
     }
 
     get(name, version): boolean {
@@ -106,7 +103,6 @@ const Utils = {
 
 
 export class Traveler {
-
     // private obj_repository: Object;
 
     private cacheVisit: CacheVisit;
@@ -114,7 +110,6 @@ export class Traveler {
 
     constructor(storage: Object | null = null) {
         obj_repository = storage;
-
         //single instance per a travel
         this.cacheVisit = new CacheVisit();
     }
@@ -122,7 +117,6 @@ export class Traveler {
         return this.cacheVisit;
     }
     get_cache_visit() {
-
         return { visits: this.cacheVisit.get_all(), pkg_content: cacheStore.get_all() };
     }
 
@@ -136,15 +130,10 @@ export class Traveler {
         if (!this.package_json_aggregated_instance.hasOwnProperty('ptr')) {
             this.package_json_aggregated_instance.ptr = this.next_get_package_json_with_deps(name, version, level).catch(e => {
                 this.package_json_aggregated_instance.ptr = e.message;
-                console.log(1, e);
-                console.log(2, e.message);
-
-                process.exit(1);
-
+                console.log(e.message);
             })
             was_running = false;
         }
-
         return { was_running };
     }
 
@@ -157,9 +146,6 @@ export class Traveler {
         if (level == 0) {
             return "reach level:" + config.default_max_level;
         }
-
-
-        // version = semver.coerce(version)
 
         //EXPAND CURRENT DEPENDENCY IF NOT ALREADY EXISTS 
         if (!this.cacheVisit.get(name, version)) {
